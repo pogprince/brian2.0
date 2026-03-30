@@ -1,0 +1,58 @@
+{
+  "active_focus": "Building the Brain MVP — a modular agent operating system with dashboard, agents, and flow-managed writeback.",
+  "priority_stack": [
+    {
+      "id": "pri-001",
+      "title": "Core dashboard functional",
+      "score": 0.85,
+      "urgency": 0.9,
+      "blockage_impact": 0.8,
+      "goal_proximity": 0.9,
+      "dependency_weight": 0.7,
+      "frequency": 0.8,
+      "user_emphasis": 0.9,
+      "project": "brain-mvp"
+    },
+    {
+      "id": "pri-002",
+      "title": "Agent creation and lifecycle",
+      "score": 0.78,
+      "urgency": 0.8,
+      "blockage_impact": 0.7,
+      "goal_proximity": 0.85,
+      "dependency_weight": 0.8,
+      "frequency": 0.7,
+      "user_emphasis": 0.8,
+      "project": "brain-mvp"
+    },
+    {
+      "id": "pri-003",
+      "title": "Flow-managed writeback loop",
+      "score": 0.72,
+      "urgency": 0.7,
+      "blockage_impact": 0.6,
+      "goal_proximity": 0.8,
+      "dependency_weight": 0.9,
+      "frequency": 0.5,
+      "user_emphasis": 0.7,
+      "project": "brain-mvp"
+    }
+  ],
+  "blockers": [],
+  "recommended_actions": [
+    "Set up your ANTHROPIC_API_KEY to enable LLM-powered agent runs",
+    "Explore the brain module viewer to customize your knowledge base",
+    "Create your first custom agent from the Agent Library"
+  ],
+  "recent_mutations": [
+    {
+      "id": "mut-init-001",
+      "type": "system-init",
+      "description": "Brain MVP initialized with core modules and seed agents",
+      "module": "system",
+      "timestamp": "2026-03-30T00:00:00.000Z",
+      "agent": "system"
+    }
+  ],
+  "pending_writebacks": []
+}

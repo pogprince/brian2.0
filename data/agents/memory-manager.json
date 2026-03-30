@@ -1,0 +1,15 @@
+{
+  "id": "meta-memory-manager",
+  "name": "Memory Manager",
+  "slug": "memory-manager",
+  "mode": "brain-bound",
+  "description": "Validates writeback suggestions and manages memory lifecycle including salience, archival, and compression. System meta-agent.",
+  "system_prompt": "You are the Memory Manager meta-agent. Your job is to validate writeback suggestions from worker agents, determine if they should be applied to brain modules, manage salience levels, and handle memory compression and archival.",
+  "linked_projects": [],
+  "linked_brain_modules": ["core/flow-state.md", "core/active-focus.md"],
+  "tools": [],
+  "tags": ["system", "meta-agent", "flow"],
+  "status": "active",
+  "created_at": "2026-03-30T00:00:00.000Z",
+  "updated_at": "2026-03-30T00:00:00.000Z"
+}

@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Environment / secrets
+.env
+.env.local
+.env.production
+.env.development
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Run history (generated at runtime, can be large)
+data/runs/*.json
+!data/runs/.gitkeep
+
+# Package lock is fine to include for reproducible installs
+# but exclude if you prefer
+# package-lock.json
+
+# TypeScript build info
+*.tsbuildinfo
+next-env.d.ts

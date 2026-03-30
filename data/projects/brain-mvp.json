@@ -1,0 +1,10 @@
+{
+  "slug": "brain-mvp",
+  "name": "Brain MVP",
+  "description": "A modular agent operating system with markdown-based memory, flow-state orchestration, and a control-plane dashboard.",
+  "status": "active",
+  "created_at": "2026-03-30T00:00:00.000Z",
+  "updated_at": "2026-03-30T00:00:00.000Z",
+  "linked_agents": ["sample-analyst"],
+  "modules": ["projects/brain-mvp/project.md", "projects/brain-mvp/decisions.md", "projects/brain-mvp/tasks.md"]
+}

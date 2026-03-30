@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  body {
+    @apply bg-surface-1 text-ink-0 font-sans antialiased;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-xl border border-surface-3 shadow-sm;
+  }
+  .card-padded {
+    @apply card p-5;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-anon {
+    @apply badge bg-amber-100 text-amber-800;
+  }
+  .badge-brain-bound {
+    @apply badge bg-brain-100 text-brain-800;
+  }
+  .badge-system {
+    @apply badge bg-purple-100 text-purple-800;
+  }
+  .badge-active {
+    @apply badge bg-green-100 text-green-800;
+  }
+  .badge-archived {
+    @apply badge bg-gray-100 text-gray-600;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-brain-600 text-white hover:bg-brain-700 active:bg-brain-800;
+  }
+  .btn-secondary {
+    @apply btn bg-surface-2 text-ink-1 hover:bg-surface-3 active:bg-surface-4;
+  }
+  .btn-ghost {
+    @apply btn text-ink-2 hover:bg-surface-2 active:bg-surface-3;
+  }
+  .btn-danger {
+    @apply btn bg-status-error text-white hover:bg-red-600;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+  .input {
+    @apply w-full px-3 py-2 rounded-lg border border-surface-3 bg-white text-ink-0 text-sm placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-brain-500/20 focus:border-brain-500 transition-colors;
+  }
+  .textarea {
+    @apply input resize-none;
+  }
+  .label {
+    @apply block text-sm font-medium text-ink-1 mb-1;
+  }
+  .section-title {
+    @apply text-lg font-semibold text-ink-0;
+  }
+  .stat-value {
+    @apply text-2xl font-bold text-ink-0;
+  }
+  .stat-label {
+    @apply text-xs font-medium text-ink-3 uppercase tracking-wider;
+  }
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #ced4da; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #adb5bd; }
+
+.prose-brain h1 { @apply text-xl font-bold mb-3 text-ink-0; }
+.prose-brain h2 { @apply text-lg font-semibold mb-2 text-ink-0; }
+.prose-brain h3 { @apply text-base font-semibold mb-2 text-ink-1; }
+.prose-brain p { @apply mb-3 text-ink-1 leading-relaxed; }
+.prose-brain ul { @apply mb-3 pl-5 list-disc text-ink-1; }
+.prose-brain ol { @apply mb-3 pl-5 list-decimal text-ink-1; }
+.prose-brain li { @apply mb-1; }
+.prose-brain code { @apply bg-surface-2 px-1.5 py-0.5 rounded text-sm font-mono text-brain-700; }
+.prose-brain pre { @apply bg-surface-2 p-4 rounded-lg mb-3 overflow-x-auto; }
+.prose-brain pre code { @apply bg-transparent p-0; }
+.prose-brain blockquote { @apply border-l-4 border-brain-300 pl-4 italic text-ink-2 mb-3; }

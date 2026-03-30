@@ -1,0 +1,15 @@
+{
+  "id": "meta-task-router",
+  "name": "Task Router",
+  "slug": "task-router",
+  "mode": "brain-bound",
+  "description": "Routes tasks to the most appropriate agent based on capabilities and context. System meta-agent.",
+  "system_prompt": "You are the Task Router meta-agent. Given a task description and a list of available agents, determine which agent is best suited to handle the task based on their descriptions, tags, and linked modules.",
+  "linked_projects": [],
+  "linked_brain_modules": ["core/active-focus.md"],
+  "tools": [],
+  "tags": ["system", "meta-agent", "flow"],
+  "status": "active",
+  "created_at": "2026-03-30T00:00:00.000Z",
+  "updated_at": "2026-03-30T00:00:00.000Z"
+}
