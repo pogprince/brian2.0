@@ -30,6 +30,9 @@ npm-debug.log*
 data/runs/*.json
 !data/runs/.gitkeep
 
+# Auth sessions (sensitive, generated at runtime)
+data/sessions/
+
 # Package lock is fine to include for reproducible installs
 # but exclude if you prefer
 # package-lock.json

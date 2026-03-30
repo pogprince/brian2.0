@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
+import { useState, useEffect, useCallback } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
@@ -16,8 +17,44 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  return (
-    <aside className="w-60 h-screen bg-white border-r border-surface-3 flex flex-col">
+  const router = useRouter()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
+
+  // Close on Escape key
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    if (mobileOpen) {
+      document.addEventListener('keydown', onKeyDown)
+      return () => document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [mobileOpen])
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = '' }
+    }
+  }, [mobileOpen])
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch {
+      // proceed to redirect even if request fails
+    }
+    router.push('/login')
+  }, [router])
+
+  const sidebarContent = (
+    <>
       <div className="p-5 border-b border-surface-3">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-brain-600 flex items-center justify-center">
@@ -44,16 +81,100 @@ export function Sidebar() {
           )
         })}
       </nav>
-      <div className="p-4 border-t border-surface-3">
+      <div className="p-4 border-t border-surface-3 space-y-3">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink-1 transition-colors"
+        >
+          <LogoutIcon className="w-4 h-4 text-ink-3" />
+          Sign Out
+        </button>
         <div className="text-xs text-ink-4">
           <p>Brain MVP v0.1.0</p>
           <p className="mt-0.5">Local mode</p>
         </div>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-surface-3 flex items-center px-4 gap-3">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-1.5 -ml-1.5 rounded-lg hover:bg-surface-2 transition-colors"
+          aria-label="Open menu"
+        >
+          <HamburgerIcon className="w-5 h-5 text-ink-1" />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-brain-600 flex items-center justify-center">
+            <span className="text-white font-bold text-xs">B</span>
+          </div>
+          <h1 className="text-sm font-bold text-ink-0">Brain</h1>
+        </div>
+      </div>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        >
+          <aside
+            className="w-64 h-full bg-white flex flex-col shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button row */}
+            <div className="flex justify-end p-2">
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-surface-2 transition-colors"
+                aria-label="Close menu"
+              >
+                <CloseIcon className="w-5 h-5 text-ink-2" />
+              </button>
+            </div>
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-60 h-screen bg-white border-r border-surface-3 flex-col shrink-0">
+        {sidebarContent}
+      </aside>
+    </>
   )
 }
 
+function HamburgerIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  )
+}
+function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+}
+function LogoutIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  )
+}
 function DashboardIcon({ className }: { className?: string }) {
   return (<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>)
 }
