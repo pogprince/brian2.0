@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const [password, setPassword] = useState('')
@@ -38,9 +39,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-surface-1 p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-brain-600 flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-2xl">B</span>
-          </div>
+          <Image src="/logo.png" alt="Brain" width={64} height={64} className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-ink-0">Brain</h1>
           <p className="text-sm text-ink-3 mt-1">Cognitive Operating System</p>
         </div>

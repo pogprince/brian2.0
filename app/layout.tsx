@@ -5,6 +5,10 @@ import { Sidebar } from '@/components/layout/sidebar'
 export const metadata: Metadata = {
   title: 'Brain — Cognitive Operating System',
   description: 'A modular agent operating system with markdown-based memory and flow-state orchestration.',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/logo.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

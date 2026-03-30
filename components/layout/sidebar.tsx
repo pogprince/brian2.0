@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
 import { useState, useEffect, useCallback } from 'react'
@@ -57,9 +58,7 @@ export function Sidebar() {
     <>
       <div className="p-5 border-b border-surface-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-brain-600 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">B</span>
-          </div>
+          <Image src="/logo.png" alt="Brain" width={32} height={32} className="w-8 h-8 rounded-lg" />
           <div>
             <h1 className="text-base font-bold text-ink-0 leading-tight">Brain</h1>
             <p className="text-[10px] text-ink-3 uppercase tracking-widest">Cognitive OS</p>
@@ -109,9 +108,7 @@ export function Sidebar() {
           <HamburgerIcon className="w-5 h-5 text-ink-1" />
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-brain-600 flex items-center justify-center">
-            <span className="text-white font-bold text-xs">B</span>
-          </div>
+          <Image src="/logo.png" alt="Brain" width={28} height={28} className="w-7 h-7 rounded-lg" />
           <h1 className="text-sm font-bold text-ink-0">Brain</h1>
         </div>
       </div>
