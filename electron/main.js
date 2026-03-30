@@ -1,27 +1,16 @@
 const { app, BrowserWindow, Tray, Menu, shell, dialog } = require('electron')
-const { spawn } = require('child_process')
+const { spawn, execSync } = require('child_process')
 const path = require('path')
-const net = require('net')
 const waitOn = require('wait-on')
 
+const PORT = 4747 // Use a unique port to avoid conflicts
+const APP_URL = `http://localhost:${PORT}`
 const ICON_PATH = path.join(__dirname, 'icon.png')
 
-let appUrl = 'http://localhost:3000'
 let mainWindow = null
 let nextProcess = null
 let tray = null
 let isQuitting = false
-
-// Find an available port starting from 3000
-function findPort(startPort) {
-  return new Promise((resolve) => {
-    const server = net.createServer()
-    server.listen(startPort, () => {
-      server.close(() => resolve(startPort))
-    })
-    server.on('error', () => resolve(findPort(startPort + 1)))
-  })
-}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -36,11 +25,10 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    titleBarStyle: 'default',
     show: false,
   })
 
-  mainWindow.loadURL(appUrl)
+  mainWindow.loadURL(APP_URL)
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
@@ -73,17 +61,11 @@ function createTray() {
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Open Brain', click: () => mainWindow?.show() },
     { type: 'separator' },
-    { label: 'Dashboard', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${appUrl}/dashboard`) } },
-    { label: 'Agents', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${appUrl}/agents`) } },
-    { label: 'Runner', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${appUrl}/runner`) } },
+    { label: 'Dashboard', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${APP_URL}/dashboard`) } },
+    { label: 'Agents', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${APP_URL}/agents`) } },
+    { label: 'Runner', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${APP_URL}/runner`) } },
     { type: 'separator' },
-    {
-      label: 'Quit Brain',
-      click: () => {
-        isQuitting = true
-        app.quit()
-      }
-    },
+    { label: 'Quit Brain', click: () => { isQuitting = true; app.quit() } },
   ])
 
   tray.setToolTip('Brain — Cognitive OS')
@@ -91,14 +73,13 @@ function createTray() {
   tray.on('click', () => mainWindow?.show())
 }
 
-async function startNextServer(port) {
+function startNextServer() {
   const isWin = process.platform === 'win32'
   const npmCmd = isWin ? 'npm.cmd' : 'npm'
 
-  // Use next dev with explicit port
-  nextProcess = spawn(npmCmd, ['run', 'dev', '--', '-p', port.toString()], {
+  nextProcess = spawn(npmCmd, ['run', 'dev', '--', '-p', String(PORT)], {
     cwd: path.join(__dirname, '..'),
-    env: { ...process.env, BROWSER: 'none' },
+    env: { ...process.env, BROWSER: 'none', PORT: String(PORT) },
     stdio: 'pipe',
     shell: isWin,
   })
@@ -106,29 +87,22 @@ async function startNextServer(port) {
   nextProcess.stdout?.on('data', (data) => {
     console.log(`[Next.js] ${data.toString().trim()}`)
   })
-
   nextProcess.stderr?.on('data', (data) => {
     console.error(`[Next.js] ${data.toString().trim()}`)
   })
-
   nextProcess.on('error', (err) => {
     console.error('Failed to start Next.js:', err)
     dialog.showErrorBox('Brain — Startup Error',
-      'Failed to start the Next.js server. Make sure you ran npm install first.')
-  })
-
-  nextProcess.on('exit', (code) => {
-    console.log(`Next.js exited with code ${code}`)
-    if (!isQuitting) {
-      nextProcess = null
-    }
+      'Failed to start the server. Make sure you ran "npm install" first.')
   })
 }
 
 function stopNextServer() {
   if (nextProcess) {
     if (process.platform === 'win32') {
-      spawn('taskkill', ['/pid', nextProcess.pid.toString(), '/f', '/t'], { shell: true })
+      try {
+        execSync(`taskkill /pid ${nextProcess.pid} /f /t`, { stdio: 'ignore' })
+      } catch {}
     } else {
       nextProcess.kill('SIGTERM')
     }
@@ -137,24 +111,20 @@ function stopNextServer() {
 }
 
 async function init() {
-  // Find an available port
-  const port = await findPort(3000)
-  appUrl = `http://localhost:${port}`
-  console.log(`[Brain] Starting on port ${port}`)
+  console.log(`[Brain] Starting on ${APP_URL}`)
+  startNextServer()
 
-  // Start Next.js on that port
-  await startNextServer(port)
-
-  // Wait for it to be ready
   try {
     await waitOn({
-      resources: [appUrl],
-      timeout: 30000,
-      interval: 500,
+      resources: [`tcp:localhost:${PORT}`],
+      timeout: 45000,
+      interval: 1000,
     })
+    // Give Next.js a moment to finish compiling after port is open
+    await new Promise(r => setTimeout(r, 3000))
   } catch {
     dialog.showErrorBox('Brain — Startup Error',
-      'Next.js server did not start in time. Check the console for errors.')
+      'Server did not start in time. Check the console for errors.')
     app.quit()
     return
   }
@@ -185,11 +155,8 @@ if (!gotLock) {
   })
 
   app.on('activate', () => {
-    if (mainWindow === null) {
-      createWindow()
-    } else {
-      mainWindow.show()
-    }
+    if (mainWindow === null) createWindow()
+    else mainWindow.show()
   })
 
   app.on('before-quit', () => {
