@@ -37,3 +37,6 @@ data/runs/*.json
 # TypeScript build info
 *.tsbuildinfo
 next-env.d.ts
+
+# Electron build output
+dist-electron/
