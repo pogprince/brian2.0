@@ -1,15 +1,27 @@
 const { app, BrowserWindow, Tray, Menu, shell, dialog } = require('electron')
 const { spawn } = require('child_process')
 const path = require('path')
+const net = require('net')
 const waitOn = require('wait-on')
 
-const DEV_URL = 'http://localhost:3000'
 const ICON_PATH = path.join(__dirname, 'icon.png')
 
+let appUrl = 'http://localhost:3000'
 let mainWindow = null
 let nextProcess = null
 let tray = null
 let isQuitting = false
+
+// Find an available port starting from 3000
+function findPort(startPort) {
+  return new Promise((resolve) => {
+    const server = net.createServer()
+    server.listen(startPort, () => {
+      server.close(() => resolve(startPort))
+    })
+    server.on('error', () => resolve(findPort(startPort + 1)))
+  })
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -28,13 +40,12 @@ function createWindow() {
     show: false,
   })
 
-  mainWindow.loadURL(DEV_URL)
+  mainWindow.loadURL(appUrl)
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
   })
 
-  // Open external links in system browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
     return { action: 'deny' }
@@ -56,16 +67,15 @@ function createTray() {
   try {
     tray = new Tray(ICON_PATH)
   } catch {
-    // Tray icon optional — may fail if icon.png is missing
     return
   }
 
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Open Brain', click: () => mainWindow?.show() },
     { type: 'separator' },
-    { label: 'Dashboard', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${DEV_URL}/dashboard`) } },
-    { label: 'Agents', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${DEV_URL}/agents`) } },
-    { label: 'Runner', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${DEV_URL}/runner`) } },
+    { label: 'Dashboard', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${appUrl}/dashboard`) } },
+    { label: 'Agents', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${appUrl}/agents`) } },
+    { label: 'Runner', click: () => { mainWindow?.show(); mainWindow?.loadURL(`${appUrl}/runner`) } },
     { type: 'separator' },
     {
       label: 'Quit Brain',
@@ -81,11 +91,12 @@ function createTray() {
   tray.on('click', () => mainWindow?.show())
 }
 
-function startNextServer() {
+async function startNextServer(port) {
   const isWin = process.platform === 'win32'
   const npmCmd = isWin ? 'npm.cmd' : 'npm'
 
-  nextProcess = spawn(npmCmd, ['run', 'dev'], {
+  // Use next dev with explicit port
+  nextProcess = spawn(npmCmd, ['run', 'dev', '--', '-p', port.toString()], {
     cwd: path.join(__dirname, '..'),
     env: { ...process.env, BROWSER: 'none' },
     stdio: 'pipe',
@@ -126,13 +137,18 @@ function stopNextServer() {
 }
 
 async function init() {
-  // Start the Next.js dev server
-  startNextServer()
+  // Find an available port
+  const port = await findPort(3000)
+  appUrl = `http://localhost:${port}`
+  console.log(`[Brain] Starting on port ${port}`)
+
+  // Start Next.js on that port
+  await startNextServer(port)
 
   // Wait for it to be ready
   try {
     await waitOn({
-      resources: [DEV_URL],
+      resources: [appUrl],
       timeout: 30000,
       interval: 500,
     })
@@ -147,7 +163,6 @@ async function init() {
   createTray()
 }
 
-// Single instance lock
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
   app.quit()
@@ -163,7 +178,6 @@ if (!gotLock) {
   app.whenReady().then(init)
 
   app.on('window-all-closed', () => {
-    // Keep running in tray on macOS
     if (process.platform !== 'darwin') {
       isQuitting = true
       app.quit()
