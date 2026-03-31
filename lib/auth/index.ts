@@ -1,85 +1,138 @@
-import { cookies } from 'next/headers'
+// Auth utilities — user management for NextAuth
+import fs from 'fs/promises'
+import path from 'path'
 import crypto from 'crypto'
 
-const SESSION_COOKIE = 'brain_session'
-const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
+const USERS_FILE = path.join(process.cwd(), 'data', 'users.json')
 
-function getPassword(): string {
-  return process.env.BRAIN_PASSWORD || 'brain' // default password for local dev
+export interface UserRecord {
+  id: string
+  username: string
+  name: string
+  email?: string
+  password_hash?: string
+  provider?: string
+  image?: string
+  created_at: string
+  last_login?: string
 }
 
-function hashToken(token: string): string {
-  return crypto.createHash('sha256').update(token).digest('hex')
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex')
 }
 
-export function generateSession(): string {
-  return crypto.randomBytes(32).toString('hex')
+export function verifyPassword(password: string, hash: string): boolean {
+  return hashPassword(password) === hash
 }
 
-export function validatePassword(password: string): boolean {
-  return password === getPassword()
-}
-
-export async function createSession(): Promise<string> {
-  const token = generateSession()
-  const cookieStore = await cookies()
-  cookieStore.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: SESSION_DURATION / 1000,
-    path: '/',
-  })
-
-  // Store hashed token for validation
-  // For MVP, we store in a simple file. Extension point: use a proper session store
-  const fs = await import('fs/promises')
-  const path = await import('path')
-  const sessionDir = path.join(process.cwd(), 'data', 'sessions')
-  await fs.mkdir(sessionDir, { recursive: true })
-  await fs.writeFile(
-    path.join(sessionDir, `${hashToken(token)}.json`),
-    JSON.stringify({ created: Date.now(), expires: Date.now() + SESSION_DURATION }),
-    'utf-8'
-  )
-
-  return token
-}
-
-export async function validateSession(): Promise<boolean> {
+async function readUsers(): Promise<UserRecord[]> {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get(SESSION_COOKIE)?.value
-    if (!token) return false
-
-    const fs = await import('fs/promises')
-    const path = await import('path')
-    const sessionFile = path.join(process.cwd(), 'data', 'sessions', `${hashToken(token)}.json`)
-
-    const raw = await fs.readFile(sessionFile, 'utf-8')
-    const session = JSON.parse(raw)
-
-    if (Date.now() > session.expires) {
-      await fs.unlink(sessionFile).catch(() => {})
-      return false
-    }
-
-    return true
+    const raw = await fs.readFile(USERS_FILE, 'utf-8')
+    return JSON.parse(raw)
   } catch {
-    return false
+    return []
   }
 }
 
-export async function destroySession(): Promise<void> {
-  try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get(SESSION_COOKIE)?.value
-    if (token) {
-      const fs = await import('fs/promises')
-      const path = await import('path')
-      const sessionFile = path.join(process.cwd(), 'data', 'sessions', `${hashToken(token)}.json`)
-      await fs.unlink(sessionFile).catch(() => {})
+async function writeUsers(users: UserRecord[]): Promise<void> {
+  await fs.mkdir(path.dirname(USERS_FILE), { recursive: true })
+  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8')
+}
+
+export async function findUserByUsername(username: string): Promise<UserRecord | null> {
+  const users = await readUsers()
+  return users.find(u => u.username.toLowerCase() === username.toLowerCase()) || null
+}
+
+export async function findUserByEmail(email: string): Promise<UserRecord | null> {
+  const users = await readUsers()
+  return users.find(u => u.email?.toLowerCase() === email.toLowerCase()) || null
+}
+
+export async function authenticateUser(username: string, password: string): Promise<UserRecord | null> {
+  const user = await findUserByUsername(username)
+  if (!user || !user.password_hash) return null
+  if (!verifyPassword(password, user.password_hash)) return null
+
+  user.last_login = new Date().toISOString()
+  const users = await readUsers()
+  const idx = users.findIndex(u => u.id === user.id)
+  if (idx >= 0) {
+    users[idx] = user
+    await writeUsers(users)
+  }
+  return user
+}
+
+export async function createUser(params: {
+  username: string
+  name: string
+  email?: string
+  password?: string
+  provider?: string
+  image?: string
+}): Promise<UserRecord> {
+  const users = await readUsers()
+
+  if (users.some(u => u.username.toLowerCase() === params.username.toLowerCase())) {
+    throw new Error('Username already exists')
+  }
+
+  const user: UserRecord = {
+    id: crypto.randomUUID(),
+    username: params.username,
+    name: params.name,
+    email: params.email,
+    password_hash: params.password ? hashPassword(params.password) : undefined,
+    provider: params.provider || 'credentials',
+    image: params.image,
+    created_at: new Date().toISOString(),
+  }
+
+  users.push(user)
+  await writeUsers(users)
+  return user
+}
+
+export async function findOrCreateOAuthUser(params: {
+  email: string
+  name: string
+  provider: string
+  image?: string
+}): Promise<UserRecord> {
+  let user = await findUserByEmail(params.email)
+  if (user) {
+    user.last_login = new Date().toISOString()
+    if (params.image) user.image = params.image
+    const users = await readUsers()
+    const idx = users.findIndex(u => u.id === user!.id)
+    if (idx >= 0) {
+      users[idx] = user
+      await writeUsers(users)
     }
-    cookieStore.delete(SESSION_COOKIE)
-  } catch {}
+    return user
+  }
+
+  const username = params.email.split('@')[0] + '-' + Date.now().toString(36)
+  return createUser({
+    username,
+    name: params.name,
+    email: params.email,
+    provider: params.provider,
+    image: params.image,
+  })
+}
+
+// Seed default admin if no users exist
+export async function ensureDefaultUser(): Promise<void> {
+  const users = await readUsers()
+  if (users.length === 0) {
+    const pw = process.env.BRAIN_PASSWORD || 'brain'
+    await createUser({
+      username: 'admin',
+      name: 'Admin',
+      password: pw,
+      provider: 'credentials',
+    })
+  }
 }

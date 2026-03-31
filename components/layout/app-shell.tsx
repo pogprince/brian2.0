@@ -5,9 +5,9 @@ import { Sidebar } from './sidebar'
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const isLogin = pathname === '/login'
+  const isPublic = pathname === '/login' || pathname === '/register'
 
-  if (isLogin) {
+  if (isPublic) {
     return <>{children}</>
   }
 

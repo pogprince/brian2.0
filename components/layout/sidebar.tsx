@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
+import { signOut } from 'next-auth/react'
 import { clsx } from 'clsx'
 import { useState, useEffect, useCallback } from 'react'
 
@@ -18,7 +19,6 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   // Close mobile sidebar on route change
@@ -45,14 +45,9 @@ export function Sidebar() {
     }
   }, [mobileOpen])
 
-  const handleLogout = useCallback(async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' })
-    } catch {
-      // proceed to redirect even if request fails
-    }
-    router.push('/login')
-  }, [router])
+  const handleLogout = useCallback(() => {
+    signOut({ callbackUrl: '/login' })
+  }, [])
 
   const sidebarContent = (
     <>

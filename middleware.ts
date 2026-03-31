@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
-const PUBLIC_PATHS = ['/login', '/api/auth']
+const PUBLIC_PATHS = ['/login', '/register', '/api/auth']
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow public paths
@@ -11,14 +12,26 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Allow static files
-  if (pathname.startsWith('/_next') || pathname.startsWith('/icon') || pathname === '/favicon.ico') {
+  // Allow static files and images
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/icon') ||
+    pathname.startsWith('/logo') ||
+    pathname.startsWith('/favicon') ||
+    pathname.endsWith('.png') ||
+    pathname.endsWith('.svg') ||
+    pathname.endsWith('.ico')
+  ) {
     return NextResponse.next()
   }
 
-  // Check for session cookie
-  const session = request.cookies.get('brain_session')
-  if (!session?.value) {
+  // Check NextAuth session token
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET || 'brain-dev-secret-change-in-production',
+  })
+
+  if (!token) {
     const loginUrl = new URL('/login', request.url)
     return NextResponse.redirect(loginUrl)
   }
